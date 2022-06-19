@@ -1,19 +1,29 @@
 <template>
     <div class="app">
         <h1>Страница с постами</h1>
-        <my-button
+        <my-input
+            v-model="searchQuery"
+            placeholder="Поиск...."
+        />
+        <div class="app__btns">
+            <my-button
             @click="showDialog"
-            style="margin: 15px 0;"
-        >
-            Создать пост
-        </my-button>
+            >
+                Создать пост
+            </my-button>
+            <my-select
+                v-model="selectedSort"
+                :options="sortOptions"
+            />
+        </div>
+        
         <my-dialog v-model:show="dialogVisible">
             <post-form
                 @create='creatPost'
             />
         </my-dialog>        
         <post-list 
-            :posts="posts"
+            :posts="sortedAndSearchedPosts"
             @remove="removePost"
             v-if="!isPostsLoading"
         />
@@ -37,6 +47,12 @@ import axios from 'axios';
                 dialogVisible: false,
                 modificatorValue: '',
                 isPostsLoading: false,
+                selectedSort: '',
+                searchQuery: '',
+                sortOptions: [
+                    {value: 'title', name: 'по названию'},
+                    {value: 'body', name: 'по содержимому'},
+                ],
             }
         },
         methods: {
@@ -65,8 +81,23 @@ import axios from 'axios';
         },
         mounted() {
             this.fetchPosts();
+        },
+        computed: {
+            sortedPosts() {
+                return [...this.posts].sort((post1, post2) => post1[this.selectedSort]?.localeCompare(post2[this.selectedSort])
+                )
+            },
+            sortedAndSearchedPosts() {
+                return this.sortedPosts.filter(post => post.title.toLowerCase().includes(this.searchQuery.toLowerCase()))
+            }
+        },
+        watch: {
+            // selectedSort(newValue) {
+            //     this.posts.sort((post1, post2) => {
+            //         return post1[newValue]?.localeCompare(post2[newValue]);
+            //     })
+            // },
         }
-        
     }
 </script>
 
@@ -85,6 +116,12 @@ import axios from 'axios';
 
 .app {
     padding: 20px;
+}
+
+.app__btns {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px 0;
 }
 
 form {
